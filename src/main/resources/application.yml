@@ -1,0 +1,63 @@
+management:
+  endpoints:
+    web:
+      exposure:
+        include: prometheus,health,info,metrics,loggers,circuitbreakerevents
+  endpoint:
+    health:
+      show-details: always
+  health:
+    circuitbreakers:
+      enabled: true
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        failureRateThreshold: 50
+        slowCallRateThreshold: 100
+        slowCallDurationThreshold: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        waitDurationInOpenState: 20s
+    instances:
+      backendA:
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        registerHealthIndicator: true
+        slowCallRateThreshold: 50
+        slidingWindowSize: 10
+        slowCallDurationThreshold: 5s
+        permittedNumberOfCallsInHalfOpenState: 3
+        eventConsumerBufferSize: 100
+      backendB:
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        registerHealthIndicator: true
+        slowCallRateThreshold: 30
+        slidingWindowSize: 6
+        slowCallDurationThreshold: 2s
+        permittedNumberOfCallsInHalfOpenState: 5
+        eventConsumerBufferSize: 2
+
+  bulkhead:
+    configs:
+      default:
+        maxConcurrentCalls: 2
+        maxWaitDuration: 2s
+    instances:
+      backendA:
+        maxWaitDuration: 3s
+
+  retry:
+    configs:
+      default:
+        maxAttempts: 4
+        waitDuration: 1s
+        ignoreExceptions: [ com.playground.resiliencepatterns.PlaygroundResource. ]
+
+  ratelimiter:
+    configs:
+      default:
+        timeoutDuration: 5s
+        limitForPeriod: 2
+        limitRefreshPeriod: 3s
